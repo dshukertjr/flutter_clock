@@ -75,56 +75,135 @@ class _DigitalClockState extends State<DigitalClock> {
       _dateTime = DateTime.now();
       // Update once per minute. If you want to update every second, use the
       // following code.
-      _timer = Timer(
-        Duration(minutes: 1) -
-            Duration(seconds: _dateTime.second) -
-            Duration(milliseconds: _dateTime.millisecond),
-        _updateTime,
-      );
-      // Update once per second, but make sure to do it at the beginning of each
-      // new second, so that the clock is accurate.
       // _timer = Timer(
-      //   Duration(seconds: 1) - Duration(milliseconds: _dateTime.millisecond),
+      //   Duration(minutes: 1) -
+      //       Duration(seconds: _dateTime.second) -
+      //       Duration(milliseconds: _dateTime.millisecond),
       //   _updateTime,
       // );
+      // Update once per second, but make sure to do it at the beginning of each
+      // new second, so that the clock is accurate.
+      _timer = Timer(
+        Duration(seconds: 1) - Duration(milliseconds: _dateTime.millisecond),
+        _updateTime,
+      );
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // final hour =
-    //     DateFormat(widget.model.is24HourFormat ? 'HH' : 'hh').format(_dateTime);
-    // final minute = DateFormat('mm').format(_dateTime);
-    final hour = '17';
-    final minute = '55';
-    final hourFontSize = MediaQuery.of(context).size.height * 0.8;
-    final minuteFontSize = hourFontSize * 0.5;
+    final hour =
+        DateFormat(widget.model.is24HourFormat ? 'HH' : 'hh').format(_dateTime);
+    final minute = DateFormat('mm').format(_dateTime);
+    final hourFontSize = MediaQuery.of(context).size.width / 5;
     final hourStyle = TextStyle(
-      color: Colors.red,
+      color: Colors.white,
       fontSize: hourFontSize,
       fontWeight: FontWeight.w900,
-    );
-    final minuteStyle = TextStyle(
-      color: Colors.blue,
-      fontSize: minuteFontSize,
+      height: 1,
     );
 
     return Container(
       color: Colors.black,
       child: Center(
-        child: Stack(
-          children: <Widget>[
-            Center(
-              child: Text(
-                hour,
+        child: Container(
+          // color: Colors.red,
+          height: hourFontSize,
+          child: ClipRect(
+            child: OverflowBox(
+              maxHeight: double.infinity,
+              child: DefaultTextStyle(
                 style: hourStyle,
+                child: _ClockNumbers(
+                    hour: hour,
+                    hourFontSize: hourFontSize,
+                    dateTime: _dateTime,
+                    minute: minute),
               ),
             ),
-            Center(
-                child: Text(
-              minute,
-              style: minuteStyle,
-            )),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ClockNumbers extends StatelessWidget {
+  const _ClockNumbers({
+    Key key,
+    @required this.hour,
+    @required this.hourFontSize,
+    @required DateTime dateTime,
+    @required this.minute,
+  })  : _dateTime = dateTime,
+        super(key: key);
+
+  final String hour;
+  final double hourFontSize;
+  final DateTime _dateTime;
+  final String minute;
+
+  @override
+  Widget build(BuildContext context) {
+    final hourTenthDigitOffsetFactor = int.parse(hour[1]) / 10;
+    final hourFirstDigitOffsetFactor = _dateTime.minute / 60;
+    final minuteTenthDigitOffsetFactor = int.parse(minute[1]) / 10;
+    final minuteFirstDigitOffsetFactor = _dateTime.second / 60;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        _IntColumn(
+          numberString: hour[0],
+          fontHeight: hourFontSize,
+          offset: hourTenthDigitOffsetFactor,
+        ),
+        _IntColumn(
+          numberString: hour[1],
+          fontHeight: hourFontSize,
+          offset: hourFirstDigitOffsetFactor,
+        ),
+        Text(':'),
+        _IntColumn(
+          numberString: minute[0],
+          fontHeight: hourFontSize,
+          offset: minuteTenthDigitOffsetFactor,
+        ),
+        _IntColumn(
+          numberString: minute[1],
+          fontHeight: hourFontSize,
+          offset: minuteFirstDigitOffsetFactor,
+        ),
+      ],
+    );
+  }
+}
+
+class _IntColumn extends StatelessWidget {
+  const _IntColumn({
+    Key key,
+    @required this.numberString,
+    @required this.fontHeight,
+    @required this.offset,
+  }) : super(key: key);
+
+  final String numberString;
+  final double fontHeight;
+  final double offset;
+
+  @override
+  Widget build(BuildContext context) {
+    final number = int.parse(numberString);
+    final nextNumber = (number + 1) % 10;
+    final double offsetY = -fontHeight / 2 + fontHeight * offset;
+    return Transform.translate(
+      offset: Offset(0, offsetY),
+      child: Container(
+        // color: Colors.blue,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(nextNumber.toString()),
+            Text(numberString),
           ],
         ),
       ),
